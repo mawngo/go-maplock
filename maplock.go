@@ -80,6 +80,31 @@ func (l *Maplock) Lock(name string) {
 	nameLock.dec()
 }
 
+// TryLock tries to lock a mutex with the given name and reports whether it succeeded.
+func (l *Maplock) TryLock(name string) bool {
+	l.mu.Lock()
+	if l.locks == nil {
+		l.locks = make(map[string]*lockCtr)
+	}
+
+	nameLock, exists := l.locks[name]
+	if !exists {
+		nameLock = &lockCtr{}
+		l.locks[name] = nameLock
+	}
+
+	// increment the nameLock waiters while inside the main mutex
+	// this makes sure that the lock isn't deleted if `Lock` and `Unlock` are called concurrently.
+	nameLock.inc()
+	try := l.mu.TryLock()
+
+	// Lock the nameLock outside the main mutex, so we don't block other operations
+	// once locked then we can decrement the number of waiters for this lock.
+	nameLock.Lock()
+	nameLock.dec()
+	return try
+}
+
 // Unlock unlocks the mutex with the given name
 // If the given lock is not being waited on by any other callers, it is deleted
 func (l *Maplock) Unlock(name string) error {
