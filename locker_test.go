@@ -21,7 +21,7 @@ func TestLockCounter(t *testing.T) {
 }
 
 func TestLockerLock(t *testing.T) {
-	l := New()
+	l := New[string]()
 	l.Lock("test")
 	ctr := l.locks["test"]
 
@@ -57,9 +57,7 @@ func TestLockerLock(t *testing.T) {
 	default:
 	}
 
-	if err := l.Unlock("test"); err != nil {
-		t.Fatal(err)
-	}
+	l.Unlock("test")
 
 	select {
 	case <-chDone:
@@ -73,7 +71,7 @@ func TestLockerLock(t *testing.T) {
 }
 
 func TestLockerUnlock(t *testing.T) {
-	l := New()
+	l := New[string]()
 
 	l.Lock("test")
 	l.Unlock("test")
@@ -92,7 +90,7 @@ func TestLockerUnlock(t *testing.T) {
 }
 
 func TestLockerConcurrency(t *testing.T) {
-	l := New()
+	l := New[string]()
 
 	var wg sync.WaitGroup
 	for i := 0; i <= 10000; i++ {

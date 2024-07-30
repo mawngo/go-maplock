@@ -1,9 +1,16 @@
-# maplock
+# Maplock
 
 A map of locks
 
+## Usage
+
+```shell
+go get github.com/mawngo/go-maplock
+```
+
+
 ```go
-m := maplock.New()
+m := maplock.New[string]()
 m.Lock("foo")
 m.Lock("bar")
 //do stuff with foo and bar
@@ -11,14 +18,16 @@ m.Unlock("foo")
 m.Unlock("bar")
 ```
 
----
+**Update** July 2024
+
+Use generic for map key. Require go 1.22+.
 
 **Update** April 2016
 
-Replaced the underlying implementation with Docker's [locker](https://github.com/docker/docker/tree/master/pkg/locker) implementation since it has exactly the same API though also adds auto-cleanup and doesn't panic on missing locks.
+Replaced the underlying implementation with Docker's [locker](https://github.com/docker/docker/tree/master/pkg/locker)
+implementation since it has exactly the same API though also adds auto-cleanup and doesn't panic on missing locks.
 
-Locker
-=====
+## Locker
 
 locker provides a mechanism for creating finer-grained locking to help
 free up more global locks to handle other tasks.
@@ -32,8 +41,7 @@ created.
 Lock references are automatically cleaned up on `Unlock` if nothing else is
 waiting for the lock.
 
-
-## Usage
+### Usage
 
 ```go
 package important
@@ -47,17 +55,17 @@ import (
 
 type important struct {
 	locks *locker.Locker
-	data  map[string]interface{}
+	data  map[string]any
 	mu    sync.Mutex
 }
 
-func (i *important) Get(name string) interface{} {
+func (i *important) Get(name string) any {
 	i.locks.Lock(name)
 	defer i.locks.Unlock(name)
 	return data[name]
 }
 
-func (i *important) Create(name string, data interface{}) {
+func (i *important) Create(name string, data any) {
 	i.locks.Lock(name)
 	defer i.locks.Unlock(name)
 
@@ -68,7 +76,7 @@ func (i *important) Create(name string, data interface{}) {
 	s.mu.Unlock()
 }
 
-func (i *important) createImportant(data interface{}) {
+func (i *important) createImportant(data any) {
 	time.Sleep(10 * time.Second)
 }
 ```
