@@ -76,7 +76,7 @@ func (l *MapLock[T]) Lock(name T) {
 	l.mu.Unlock()
 
 	// Lock the nameLock outside the main mutex, so we don't block other operations
-	// once locked then we can decrement the number of waiters for this lock.
+	// once locked, then we can decrement the number of waiters for this lock.
 	nameLock.Lock()
 	nameLock.dec()
 }
@@ -97,11 +97,11 @@ func (l *MapLock[T]) TryLock(name T) bool {
 	// increment the nameLock waiters while inside the main mutex
 	// this makes sure that the lock isn't deleted if `Lock` and `Unlock` are called concurrently.
 	nameLock.inc()
-	try := l.mu.TryLock()
+	l.mu.Unlock()
 
 	// Lock the nameLock outside the main mutex, so we don't block other operations
-	// once locked then we can decrement the number of waiters for this lock.
-	nameLock.Lock()
+	// once locked, then we can decrement the number of waiters for this lock.
+	try := nameLock.TryLock()
 	nameLock.dec()
 	return try
 }
